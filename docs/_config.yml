@@ -1,0 +1,13 @@
+# This theme is based on https://github.com/jekyll/minima
+# Please refer above link to know the available configurations
+
+title: "3YP Project Website"
+remote_theme: jekyll-theme-cayman
+description: "Remote Keyboard Tutoring System"
+markdown: kramdown
+
+kramdown:
+  parse_block_html: true
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false

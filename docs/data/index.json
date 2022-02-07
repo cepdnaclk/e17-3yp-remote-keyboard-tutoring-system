@@ -1,0 +1,46 @@
+{
+    "title": "Remote Keyboard Tutoring System",
+    "team": [
+        {
+            "name": "Shamal Weerasooriya",
+            "email": "e17380@eng.pdn.ac.lk",
+            "eNumber": "E/17/380",
+            "github_profile":"https://github.com/shamalweerasooriya",
+            "linkedin_profile":"https://www.linkedin.com/in/shamal-weerasooriya-529810215/",
+            "website": "#"
+        },
+        {
+            "name": "Dinura Dissanayake",
+            "email": "e17072@eng.pdn.ac.lk",
+            "eNumber": "E/17/072",
+            "github_profile":"https://github.com/dinuransika",
+            "linkedin_profile":"https://www.linkedin.com/in/dinura-dissanayake-9486ba1a1/",
+            "website": "#"
+        },
+        {
+            "name": "Sathira Silva",
+            "email": "e17331@eng.pdn.ac.lk",
+            "eNumber": "E/17/331",
+            "github_profile":"https://github.com/sathiiii",
+            "linkedin_profile":"https://www.linkedin.com/in/sathira-silva/",
+            "website": "#"
+        }
+    ],
+    "supervisors": [
+        {
+            "name": "Dr. Isuru Nawinne",
+            "email": "isurunawinne@eng.pdn.ac.lk",
+            "linkedin_profile":"https://lk.linkedin.com/in/isuru-nawinne-73302833",
+            "website": "#",
+            "researchgate_profile":"#"
+        },
+        {
+            "name": "Dr. Mahanama Wickramasinghe",
+            "email": "mahanamaw@eng.pdn.ac.lk",
+            "linkedin_profile":"https://www.linkedin.com/in/mahanama",
+            "website": "#",
+            "researchgate_profile":"#"
+        }
+    ],
+    "tags": ["Web", "Embedded Systems"]
+}

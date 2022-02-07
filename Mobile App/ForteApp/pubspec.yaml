@@ -1,0 +1,36 @@
+name: esp_provisioning
+
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+  flutter: ">=1.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  protobuf: ^2.0.0
+  cryptography: ^2.0.1
+  collection: ^1.15.0
+  flutter_ble_lib: ^2.3.2
+
+
+dev_dependencies:
+  flutter_launcher_name: "^0.0.1"
+  flutter_test:
+    sdk: flutter
+
+
+flutter_launcher_name:
+  name: "Forté"
+
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.tuanpm.esp_provisioning
+        pluginClass: EspProvisioningPlugin
+      ios:
+        pluginClass: EspProvisioningPlugin
+
+
