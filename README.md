@@ -126,7 +126,7 @@ The following diagram shows our secure embedded system design process. The gray 
 
 ## Feedback
 
-✨If you have any questions or suggestions for improvement regarding our project, feel free to share them [here](https://padlet.com/sathiiii/RKT_Discussion).✨
+✨ If you have any questions or suggestions for improvement regarding our project, feel free to share them [here](https://padlet.com/sathiiii/RKT_Discussion).✨
 
 ## Related Links
 
