@@ -78,6 +78,8 @@ A packet in general will be as follows:
 
 <img src="Packet Structure.jpg" width=100%>
 
+Note that the visualizer blocks will always send **Device Notify** packets indicating that it is communicating with another visualizer block unless it is the directly connected block to the processing unit. Otherwise, the visualizer block can send a **Host Notify** packet since it can directly communicate with the processing unit. However, if the Device Discover (which the following sections describe in detail) phase is not completed yet, the visualizer block that's directly connected to the processing unit will send a **Device Notify** packet to the host since the visualizer block doesn't know that it has a direct connection to the host, yet. This also makes the host to know which block is the directly connected one.
+
 **When the processing unit is powered on**, it will wait until the visualizer bar to be connected. The processing unit waits for a **Device Notify: Connected** packet (i.e. until there's an available visualizer bar connection. When a visualizer block is connected, it sends a **Device Notify: Connected** packet to the device at the right side of it). The LED ring will flash periodically to indicate that the visualizer bar needs to be connected. When it is connected to the visualizer bar, the LED ring will be turned off to indicate that the **Device Discovery** is on progress. When the processing unit recieves a Device Notify: Connected packet, it sends a **Device Discovery** packet containing it's ID (all 1s) and the destination id (the visualizer block id) set to be 0 initially.
 
 ### The Device Discovery Phase
