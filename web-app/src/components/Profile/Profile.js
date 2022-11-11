@@ -6,10 +6,13 @@ import axios from 'axios';
 import Skeleton from '@material-ui/lab/Skeleton';
 import { motion } from 'framer-motion';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import s_avatar15 from "../../assets/avatars/student/Asset 16.svg";
+import { Button } from 'react-bootstrap';
 
 import LocationOnIcon from '@material-ui/icons/LocationOn';
 import CakeIcon from '@material-ui/icons/Cake';
 import DateRangeIcon from '@material-ui/icons/DateRange';
+import ArrowBackIcon from '@material-ui/icons/ArrowBackIosOutlined';
 
 import cover1 from '../../assets/images/Cover 1.jpg';
 import NotFound from '../../assets/images/no_data.svg'
@@ -49,7 +52,6 @@ import s_avatar11 from "../../assets/avatars/student/Asset 12.svg";
 import s_avatar12 from "../../assets/avatars/student/Asset 13.svg";
 import s_avatar13 from "../../assets/avatars/student/Asset 14.svg";
 import s_avatar14 from "../../assets/avatars/student/Asset 15.svg";
-import s_avatar15 from "../../assets/avatars/student/Asset 16.svg";
 
 const tutorAvatars = [avatar1, avatar2, avatar3, avatar4, avatar5, avatar6, avatar7, avatar8, avatar9, avatar10, avatar11, avatar12, avatar13, avatar14, avatar15, avatar16, avatar17, avatar18, avatar19, avatar20];
 const studentAvatars = [s_avatar1, s_avatar2, s_avatar3, s_avatar4, s_avatar5, s_avatar6, s_avatar7, s_avatar8, s_avatar9, s_avatar10, s_avatar11, s_avatar12, s_avatar13, s_avatar14, s_avatar15];
@@ -78,6 +80,22 @@ const basicInfoBarStyle = {
     alignItems: 'center',
     backgroundColor: 'white',
     padding: '0 4rem'
+};
+
+const backButtonStyle = {
+    cursor: 'pointer', 
+    position: 'absolute', 
+    top: '1rem', 
+    left: '1rem', 
+    width: '35px', 
+    height: '35px', 
+    opacity: 0.6,
+    color: '#575757',
+    backgroundColor: 'white',
+    borderRadius: '5px',
+    padding: '5px',
+    boxShadow: "6.1px 5.9px 10.6px rgba(0, 0, 0, 0.032), 20.3px 19.9px 35.7px rgba(0, 0, 0, 0.048), 91px 89px 160px rgba(0, 0, 0, 0.08)",
+    transition: 'all 0.4s ease-in-out',
 };
 
 const convert2DOB = (date) => {
@@ -146,13 +164,22 @@ function Profile(props) {
         }
     }, [searchData]);
 
+    const mouseEnter = (event) => {
+        event.currentTarget.style.boxShadow = "0px 0.6px 1.9px rgba(0, 0, 0, 0.023), 0px 1.5px 4.3px rgba(0, 0, 0, 0.034), 0px 2.6px 7.7px rgba(0, 0, 0, 0.041), 0px 4.3px 12.8px rgba(0, 0, 0, 0.049), 0px 7.1px 21.2px rgba(0, 0, 0, 0.056), 0px 12.5px 37px rgba(0, 0, 0, 0.067), 0px 27px 80px rgba(0, 0, 0, 0.09)";
+    };
+
+    const mouseLeave = (event) => {
+        event.currentTarget.style.boxShadow = "6.1px 5.9px 10.6px rgba(0, 0, 0, 0.032), 20.3px 19.9px 35.7px rgba(0, 0, 0, 0.048), 91px 89px 160px rgba(0, 0, 0, 0.08)";
+    };
+
 	return (
 		<Container zeroPadding noHeader>
             {!searchData && loading && <div style={{width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', display: 'flex'}}>
                 <CircularProgress size={32} />
             </div>}
             {searchData && <>
-                <motion.div style={{backgroundImage: `url('${cover1}')`, backgroundPosition: 'center', backgroundSize: 'cover', width: '100%', height: '35vh'}}>
+                <motion.div style={{backgroundImage: `url('${cover1}')`, backgroundPosition: 'center', backgroundSize: 'cover', width: '100%', height: '30vh'}}>
+                    <ArrowBackIcon class='back-btn' style={backButtonStyle} onClick={() => props.history.goBack()} onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}/>
                     <div className='user-profile-header'>
                         {!loading && <motion.img src={profileImage} style={profileImageStyle} whileTap={{scale: 0.95, transition: {duration: 0.2}}}/>}
                         {loading && <Skeleton variant="circle" width={'10rem'} height={'10rem'} />}

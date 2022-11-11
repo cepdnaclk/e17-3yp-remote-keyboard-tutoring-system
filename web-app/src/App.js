@@ -1,5 +1,5 @@
 import React from "react";
-import {BrowserRouter as Router, Route, Switch} from 'react-router-dom';
+import {BrowserRouter as Router, Redirect, Route, Switch} from 'react-router-dom';
 import StudentApp from "./containers/student/StudentApp";
 import TutorApp from "./containers/tutor/TutorApp";
 import Login from "./Login";
@@ -109,6 +109,7 @@ export default function App() {
                             </Alert>
                         </Snackbar>
                         {isLoading && <CircularProgress />}
+                        {!isLoading && <Route exact path="/"> <Redirect to="/login" /> </Route>}
                         {!isLoading && <Route path="/login" component={Login} />}
                         {!isLoading && <Route path="/register" component={Register} />}
                     </div>

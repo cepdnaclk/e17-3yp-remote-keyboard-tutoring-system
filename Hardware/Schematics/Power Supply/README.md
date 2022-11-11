@@ -14,6 +14,17 @@ In the circuit LTC3440 is wired as a 5V boost converter capable of delivering a 
 
 This 3.7V Battery Charger TP4056 module is made for charging rechargeable lithium batteries using the constant-current/constant-voltage (CC/CV) charging method. In addition to safely charging a lithium battery, TP4056 BMS Board also provides the necessary protection required by lithium batteries. The TP4056 is suitable for USB power and adapter power supplies. Due to the internal PMOSFET architecture and anti-reverse charging path, no external isolation diodes are required.
 
+## Press ON - Hold OFF latching circuits
+
+For controlling smart products containing microcontrollers you often want to ensure that the power is not inadvertently removed. Consequently, you want a power switch that can be turned ON by a brief button press, but requires a longer, deliberate button hold to turn it OFF. That prevents accidentally killing power if the tactile switch is unintentionally touched.
+
+The following shows a NAND gate latch implementing the desired action:
+
+
+![](latch.png)
+
+When power is first applied, the output is held low for 3 seconds, during which time the button has no effect. After that, a momentary press latches the output high, and a long press of greater than 3 seconds latches the output low again. You can use the output to turn ON and OFF a variety of devices, including MOSFET hogh- or low-side switches. The output of the other NAND gate can be used if an inverted logic level is needed.
+
 ## Full Circuit Diagram
 
 The Circuit Diagram for Power Supply Circuit for Processing Unit (+ the Visualizer Bar) with Battery Charger & Boost Converter is given below. The circuit can be powered using two methods, one with 9V/12V DC Adapter and other with 3.7V Lithium-Ion Battery.

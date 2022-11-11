@@ -17,7 +17,24 @@ function Container(props) {
     const [searchValue, setSearchValue] = React.useState('');
     const [scrolled, setScrolled] = React.useState(false);
 
-    const { selected, tutor, heading, children, tabLabels, filterLabels, searchPlaceholder, noSearch, hasStepper, activeStep, stepperDisabled, steps, noHeader, noPadding, zeroPadding, hasFilterButton } = props;
+    const { 
+        selected, 
+        tutor, 
+        heading, 
+        children, 
+        tabLabels, 
+        filterLabels, 
+        searchPlaceholder, 
+        noSearch, 
+        hasStepper, 
+        activeStep, 
+        stepperDisabled, 
+        steps, 
+        noHeader, 
+        noPadding, 
+        zeroPadding, 
+        hasFilterButton 
+    } = props;
 
     setInterval(() => {
         var windowWidth = $(window).width();

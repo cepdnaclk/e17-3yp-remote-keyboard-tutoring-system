@@ -1501,6 +1501,8 @@ input[type=submit].btn-block {
     display: flex;
     flex-direction: row;
     align-items: center;
-    transform: translate(3rem, 8rem);
     width: 80%;
+    position: absolute;
+    top: calc(30vh - 120px);
+    left: 5%;
 }
