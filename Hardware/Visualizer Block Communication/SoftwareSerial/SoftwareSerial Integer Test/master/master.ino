@@ -1,14 +1,17 @@
 #include <NeoSWSerial.h>
 
+#define MIDI_BAUD 31250
 #define MAX_BAUD 115200
 
 #define RCV_MSK 0xF
 #define SEND_MSK 0xF0
 #define SEND_OFFSET 4
-#define ACTION_MSK 0x300
+#define ACTION_MSK 0x3
 #define ACTION_OFFSET 8
-#define CTRL_MSK 0x3FFC00
+#define ACTION_OFFSET2 2
+#define CTRL_MSK 0xFC
 #define CTRL_OFFSET 10
+#define CTRL_OFFSET2 8
 
 #define UNK_ID 0xF
 #define HOST_ID 0
@@ -36,7 +39,7 @@ uint32_t deviceDiscovery() {
 
 void setup() {
 	Serial.begin(9600);
-	Serial1.begin(9600);
+	Serial1.begin(MIDI_BAUD);
 }
 
 int i = 0;
@@ -44,41 +47,56 @@ int i = 0;
 void loop() {
 	if (Serial1.available()) {
 		char b = Serial1.read();
-   Serial.println(b, HEX);
-//		if (b == START_BYTE) {
-//			incoming = true;
-//			i = 0;
-//			return;
-//		}
-//		if (b == END_BYTE) {
-//			incoming = false;
-//      i = 0;
-//			return;
-//		}
-//		if (!incoming) return;
-//		rcv_buff[i++] = b;
-//		if (i == 4) {
-//			uint32_t packet = (rcv_buff[0] << 24) | (rcv_buff[1] << 16) | (rcv_buff[2] << 8) | rcv_buff[3];
-//			Serial.println(rcv_buff[0]);
-//			Serial.println(rcv_buff[1]);
-//			Serial.println(rcv_buff[2]);
-//			Serial.println(rcv_buff[3]);
-//			uint8_t rec_id = packet & RCV_MSK;
-//			uint8_t send_id = (packet & SEND_MSK) >> SEND_OFFSET;
-//			uint8_t action = (packet & ACTION_MSK) >> ACTION_OFFSET;
-//			uint16_t ctrl = (packet & CTRL_MSK) >> CTRL_OFFSET;
-//			if (action == DEV_NOTIFY && ctrl == CONNECTED) {
-//				Serial.println("Visualizer bar detected!");
-//				Serial.println("Sending device discovery packet...");
-//				packet = deviceDiscovery();
-//				Serial1.write((uint8_t)(packet >> 24));
-//				Serial1.write((uint8_t)(packet >> 16));
-//				Serial1.write((uint8_t)(packet >> 8));
-//				Serial1.write((uint8_t)packet);
-//			}
-//			else if (action == HOST_NOTIFY && ctrl == CONNECTED) {
-//				Serial.println("Visualizer block-" + String(send_id) + " connected!");
-//			}
-//		}
+		// Serial.println(b, HEX);
+		if (b == START_BYTE) {
+			incoming = true;
+			i = 0;
+			return;
+		}
+		if (b == END_BYTE) {
+			incoming = false;
+			i = 0;
+			return;
+		}
+		if (!incoming) return;
+		rcv_buff[i++] = b;
+		if (i == 4) {
+			// Serial.println(packet, HEX);
+			// **** TESTING THE PACKET ****
+			// Serial.print(rcv_buff[3], HEX);
+			// Serial.print(" ");
+			// Serial.print(rcv_buff[2], HEX);
+			// Serial.print(" ");
+			// Serial.print(rcv_buff[1], HEX);
+			// Serial.print(" ");
+			// Serial.print(rcv_buff[0], HEX);
+			// Serial.println();
+			uint32_t rec_id = rcv_buff[3] & RCV_MSK;
+			uint32_t send_id = (rcv_buff[3] & SEND_MSK) >> SEND_OFFSET;
+			uint32_t action = rcv_buff[2] & ACTION_MSK;
+			uint32_t ctrl = ((rcv_buff[2] & CTRL_MSK) >> ACTION_OFFSET2) | (rcv_buff[1] << CTRL_OFFSET2);
+			Serial.print("rec_id: ");
+			Serial.println(rec_id, HEX);
+			Serial.print("send_id: ");
+			Serial.println(send_id, HEX);
+			Serial.print("action: ");
+			Serial.println(action, HEX);
+			Serial.print("ctrl: ");
+			Serial.println(ctrl, HEX);
+			if (action == DEV_NOTIFY && ctrl == CONNECTED) {
+				Serial.println("Visualizer bar detected!");
+				Serial.println("Sending device discovery packet...");
+				uint32_t packet = deviceDiscovery();
+				Serial1.write(START_BYTE);
+				Serial1.write((uint8_t) (packet >> 24));
+				Serial1.write((uint8_t) (packet >> 16));
+				Serial1.write((uint8_t) (packet >> 8));
+				Serial1.write((uint8_t) packet);
+				Serial1.write(END_BYTE);
+			}
+			else if (action == HOST_NOTIFY && ctrl == CONNECTED) {
+				Serial.println("Visualizer block-" + String(send_id) + " connected!");
+			}
+		}
 	}
 }
