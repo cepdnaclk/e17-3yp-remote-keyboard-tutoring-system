@@ -1,8 +1,10 @@
 #include <avr/io.h>
 #include <NeoSWSerial.h>
+#include <NeoHWSerial.h>
 
 #define DEFAULT_BAUD 9600
 #define MIN_BAUD 300
+#define MIDI_BAUD 31250
 #define MAX_BAUD 115200
 // Calculate the prescaler value to be loaded into the UBRR (USART Baud Rate Register) for the given baud rate.
 #define BAUD_PRESCALE(baudRate) (((F_CPU / (baudRate * 16UL))) - 1)
@@ -10,10 +12,12 @@
 #define RCV_MSK 0xF
 #define SEND_MSK 0xF0
 #define SEND_OFFSET 4
-#define ACTION_MSK 0x300
+#define ACTION_MSK 0x3
 #define ACTION_OFFSET 8
-#define CTRL_MSK 0x3FFC00
+#define ACTION_OFFSET2 2
+#define CTRL_MSK 0xFC
 #define CTRL_OFFSET 10
+#define CTRL_OFFSET2 8
 
 #define UNK_ID 0xF
 #define HOST_ID 0
@@ -41,52 +45,7 @@ volatile uint8_t dev_id = UNK_ID;
 volatile int host_side_rcv = 0, device_side_rcv = 0;
 volatile uint32_t host_side_rcv_buff[4], device_side_rcv_buff[4];
 
-NeoSWSerial ss(10, 3);
-
-// Function to set the baud rate of the USART port.
-void USART_setBaudRate(uint16_t baudRate) {
-    // Check if the baud rate is in the valid range.
-    uint16_t validBaud = (baudRate >= MIN_BAUD && baudRate <= MAX_BAUD) ? baudRate : DEFAULT_BAUD;
-    // Set the baud rate by writing the appropriate value to the UBRR.
-    UBRR1H = (uint8_t) (BAUD_PRESCALE(validBaud) >> 8);
-    UBRR1L = (uint8_t) BAUD_PRESCALE(validBaud);
-}
-
-// Function to initialize the USART.
-void USART_init(uint16_t baudRate) {
-    // Enable the USART transmitter and receiver.
-    UCSR1B = (1 << RXEN1) | (1 << TXEN1);
-    // Asynchronous mode (UMSELn1:0 are cleared), 8-bit data frame (UCSZ01 and UCSZ00 are set), 1 stop bit (USBS1 is cleared), no parity (UPMn1:0 are cleared).
-    UCSR1C = (1 << UCSZ11) | (1 << UCSZ10);
-	// Enable the USART receive interrupt.
-	UCSR1B |= (1 << RXCIE1);
-    // Set baud rate.
-    USART_setBaudRate(baudRate);
-}
-
-// Function to send a 32-bit integer over the USART.
-void USART_send(uint32_t data) {
-	// cli();
-	// Wait for the USART data register to be empty.
-//	while (!(UCSR1A & (1 << UDRE1)));
-	// Send the start byte.
-//	UDR1 = START_BYTE;
-	// Wait for the USART data register to be empty.
-	while (!(UCSR1A & (1 << UDRE1)));
-	UDR1 = 'A';
-	// Send the 32-bit integer.
-	// UDR1 = (uint8_t) (data >> 24);
-	// while (!(UCSR1A & (1 << UDRE1)));
-	// UDR1 = (uint8_t) (data >> 16);
-	// while (!(UCSR1A & (1 << UDRE1)));
-	// UDR1 = (uint8_t) (data >> 8);
-	// while (!(UCSR1A & (1 << UDRE1)));
-	// UDR1 = (uint8_t) data;
-//	while (!(UCSR1A & (1 << UDRE1)));
-	// Send the end byte.
-//	UDR1 = END_BYTE;
-	// sei();
-}
+NeoSWSerial ss(10, 2);
 
 uint32_t createPacket(uint32_t rec_id, uint32_t send_id, uint32_t action, uint32_t ctrl) {
 	return rec_id | (send_id << SEND_OFFSET) | (action << ACTION_OFFSET) | (ctrl << CTRL_OFFSET);
@@ -106,31 +65,47 @@ void notifyHost() {
 	while (dev_discovery) {
 		digitalWrite(TEST_LED, alternate);
 		alternate = !alternate;
-		USART_send(deviceNotify(CONNECTED));
+		uint32_t packet = deviceNotify(CONNECTED);
+		NeoSerial1.write(START_BYTE);
+		NeoSerial1.write((uint8_t) (packet >> 24));
+		NeoSerial1.write((uint8_t) (packet >> 16));
+		NeoSerial1.write((uint8_t) (packet >> 8));
+		NeoSerial1.write((uint8_t) packet);
+		NeoSerial1.write(END_BYTE);
+		delay(1000);
+	}
+	// Wait until the connection is acknowledged.
+	while (dev_id == UNK_ID) {
+		digitalWrite(TEST_LED, HIGH);
 		delay(1000);
 	}
 }
 
 // Handle device-side RX.
-static void handleRxChar(uint8_t c) {
+static void handleRxDevice(uint8_t c) {
 	if (c == START_BYTE) {
 		dev_side_incoming = true;
 		device_side_rcv = 0;
 		return;
 	}
-	if (c == END_BYTE) {
+	if (!dev_side_incoming) return;
+	if (c == END_BYTE && device_side_rcv == 4) {
 		dev_side_incoming = false;
 		device_side_rcv = 0;
 		return;
 	}
-	if (!dev_side_incoming) return;
+	if (device_side_rcv >= 4) {
+		dev_side_incoming = false;
+		device_side_rcv = 0;
+		return;
+	}
 	device_side_rcv_buff[device_side_rcv++] = c;
 	if (device_side_rcv == 4) {
-		uint32_t packet = (device_side_rcv_buff[0] << 24) | (device_side_rcv_buff[1] << 16) | (device_side_rcv_buff[2] << 8) | device_side_rcv_buff[3];
-		uint8_t rec_id = packet & RCV_MSK;
-		uint8_t send_id = (packet & SEND_MSK) >> SEND_OFFSET;
-		uint8_t action = (packet & ACTION_MSK) >> ACTION_OFFSET;
-		uint16_t ctrl = (packet & CTRL_MSK) >> CTRL_OFFSET;
+		uint32_t rec_id = device_side_rcv_buff[3] & RCV_MSK;
+		uint32_t send_id = (device_side_rcv_buff[3] & SEND_MSK) >> SEND_OFFSET;
+		uint32_t action = device_side_rcv_buff[2] & ACTION_MSK;
+		uint32_t ctrl = ((device_side_rcv_buff[2] & CTRL_MSK) >> ACTION_OFFSET2) | (device_side_rcv_buff[1] << CTRL_OFFSET2);
+		uint32_t packet = createPacket(rec_id, send_id, action, ctrl);
 		// If the device is already connected to the host,
 		if (!dev_discovery) {
 			// If the packet is a Device Notify: Connected packet, then respond with a Device Discovery packet.
@@ -146,59 +121,85 @@ static void handleRxChar(uint8_t c) {
 				ss.write(END_BYTE);
 			}
 			// If the packet is a Host Notify: Connected packet, then forward the packet to the host.
-			else if (action == HOST_NOTIFY && ctrl == CONNECTED)
-				USART_send(packet);
+			else if (action == HOST_NOTIFY && ctrl == CONNECTED) {
+				// Send the start byte.
+				NeoSerial1.write(START_BYTE);
+				NeoSerial1.write((uint8_t) (packet >> 24));
+				NeoSerial1.write((uint8_t) (packet >> 16));
+				NeoSerial1.write((uint8_t) (packet >> 8));
+				NeoSerial1.write((uint8_t) packet);
+				// Send the end byte.
+				NeoSerial1.write(END_BYTE);
+			}
 			// ...
 		}
 	}
 }
 
 // Handle host-side RX using interrupts.
-ISR(USART_RX_vect) {
-	uint8_t c = UDR1;
+static void handleRxHost(uint8_t c) {
+	// uint8_t c = UDR1;
 	if (c == START_BYTE) {
 		host_side_incoming = true;
 		host_side_rcv = 0;
 		return;
 	}
-	if (c == END_BYTE) {
+	if (!host_side_incoming) return;
+	if (c == END_BYTE && host_side_rcv == 4) {
 		host_side_incoming = false;
+		host_side_rcv = 0;
 		return;
 	}
-	if (!host_side_incoming) return;
+	if (host_side_rcv >= 4) {
+		host_side_incoming = false;
+		host_side_rcv = 0;
+		return;
+	}
 	host_side_rcv_buff[host_side_rcv++] = c;
 	if (host_side_rcv == 4) {
-		uint32_t packet = (host_side_rcv_buff[0] << 24) | (host_side_rcv_buff[1] << 16) | (host_side_rcv_buff[2] << 8) | host_side_rcv_buff[3];
-		uint8_t rec_id = packet & RCV_MSK;
-		uint8_t send_id = (packet & SEND_MSK) >> SEND_OFFSET;
-		uint8_t action = (packet & ACTION_MSK) >> ACTION_OFFSET;
-		uint16_t ctrl = (packet & CTRL_MSK) >> CTRL_OFFSET;
+		uint32_t rec_id = host_side_rcv_buff[3] & RCV_MSK;
+		uint32_t send_id = (host_side_rcv_buff[3] & SEND_MSK) >> SEND_OFFSET;
+		uint32_t action = host_side_rcv_buff[2] & ACTION_MSK;
+		uint32_t ctrl = ((host_side_rcv_buff[2] & CTRL_MSK) >> ACTION_OFFSET2) | (host_side_rcv_buff[1] << CTRL_OFFSET2);
 		// If the device is not yet connected to the host,
 		if (dev_discovery) {
 			// If the packet is a Device Discovery packet from the host, then respond with a Host Notify: Connected packet.
 			// Assign the device ID as 1 to self.
 			if (action == DEV_DISCOVERY && send_id == HOST_ID) {
 				dev_id = 1;
-				USART_send(hostNotify(CONNECTED));
+				uint32_t packet = hostNotify(CONNECTED);
+				// Send the start byte.
+				NeoSerial1.write(START_BYTE);
+				NeoSerial1.write((uint8_t) (packet >> 24));
+				NeoSerial1.write((uint8_t) (packet >> 16));
+				NeoSerial1.write((uint8_t) (packet >> 8));
+				NeoSerial1.write((uint8_t) packet);
+				// Send the end byte.
+				NeoSerial1.write(END_BYTE);
 				dev_discovery = false;
 			}
 			// Otherwise, assign the device ID as send_id + 1 and respond with a Host Notify: Connected packet.
 			else if (action == DEV_DISCOVERY && send_id != HOST_ID) {
 				dev_id = send_id + 1;
-				USART_send(hostNotify(CONNECTED));
+				uint32_t packet = hostNotify(CONNECTED);
+				cli();
+				// THIS DELAY IS NECESSARY.
+				delay(1500);
+				// Send the start byte.
+				NeoSerial1.write(START_BYTE);
+				NeoSerial1.write((uint8_t) (packet >> 24));
+				NeoSerial1.write((uint8_t) (packet >> 16));
+				NeoSerial1.write((uint8_t) (packet >> 8));
+				NeoSerial1.write((uint8_t) packet);
+				// Send the end byte.
+				NeoSerial1.write(END_BYTE);
 				dev_discovery = false;
+				sei();
 			}
 		}
 		// If the device is connected to the host,
 		else {
-			// If the packet is Device Discovery packet from the host, forward the packet to the next device.
-			if (action == DEV_DISCOVERY) {
-				packet = createPacket(rec_id, dev_id, DEV_DISCOVERY, 0);
-				ss.write((uint8_t) (packet >> 24));
-				ss.write((uint8_t) (packet >> 16));
-				ss.write((uint8_t) (packet >> 8));
-				ss.write((uint8_t) packet);
-			}
+			// ...
 		}
 	}
 }
@@ -207,12 +208,13 @@ void setup() {
 	pinMode(TEST_LED, OUTPUT);
 	pinMode(TEST_LED2, OUTPUT);
 
-	USART_init(DEFAULT_BAUD);
-	// ss.attachInterrupt(handleRxChar);
-	// ss.begin(DEFAULT_BAUD);
-	cli();
+	// Serial.begin(DEFAULT_BAUD);
+	NeoSerial1.attachInterrupt(handleRxHost);
+	NeoSerial1.begin(MIDI_BAUD);
+	ss.attachInterrupt(handleRxDevice);
+	ss.begin(MIDI_BAUD);
 	notifyHost();
-	sei();
+	digitalWrite(TEST_LED, LOW);
 }
 
 void loop() {
