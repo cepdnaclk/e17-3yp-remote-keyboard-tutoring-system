@@ -1,4 +1,4 @@
-#include <NeoSWSerial.h>
+// #include <NeoSWSerial.h>
 
 #define MIDI_BAUD 31250
 #define MAX_BAUD 115200
@@ -39,14 +39,14 @@ uint32_t deviceDiscovery() {
 
 void setup() {
 	Serial.begin(9600);
-	Serial1.begin(MIDI_BAUD);
+	Serial2.begin(MIDI_BAUD);
 }
 
 int i = 0;
 
 void loop() {
-	if (Serial1.available()) {
-		char b = Serial1.read();
+	if (Serial2.available()) {
+		char b = Serial2.read();
 		// Serial.println(b, HEX);
 		if (b == START_BYTE) {
 			incoming = true;
@@ -87,12 +87,12 @@ void loop() {
 				Serial.println("Visualizer bar detected!");
 				Serial.println("Sending device discovery packet...");
 				uint32_t packet = deviceDiscovery();
-				Serial1.write(START_BYTE);
-				Serial1.write((uint8_t) (packet >> 24));
-				Serial1.write((uint8_t) (packet >> 16));
-				Serial1.write((uint8_t) (packet >> 8));
-				Serial1.write((uint8_t) packet);
-				Serial1.write(END_BYTE);
+				Serial2.write(START_BYTE);
+				Serial2.write((uint8_t) (packet >> 24));
+				Serial2.write((uint8_t) (packet >> 16));
+				Serial2.write((uint8_t) (packet >> 8));
+				Serial2.write((uint8_t) packet);
+				Serial2.write(END_BYTE);
 			}
 			else if (action == HOST_NOTIFY && ctrl == CONNECTED) {
 				Serial.println("Visualizer block-" + String(send_id) + " connected!");
