@@ -30,13 +30,13 @@ Categories: Note On, Note Off, Polyphonic Key Pressure, Channel Pressure, Pitch 
 
 ![](protocol.png)
 
-10000000 (128) = note off
-10010000 (144) = note on
-10100000 (160)  = aftertouch
-10110000 (176) = continuous controller
-11000000 (192) = patch change
-11010000 (208) = channel pressure
-11100000 (224) = pitch bend
+10000000 (128) = note off</br>
+10010000 (144) = note on</br>
+10100000 (160)  = aftertouch</br>
+10110000 (176) = continuous controller</br>
+11000000 (192) = patch change</br>
+11010000 (208) = channel pressure</br>
+11100000 (224) = pitch bend</br>
 
 ### Note On
 
