@@ -36,6 +36,8 @@
 #define TEST_LED 9
 #define TEST_LED2 8
 
+int led_pins[12] = {3, 4, 5, 6, 7, 8, 9, 16, 14, 15, 18, 19};
+
 // Each visualizer block is initially in the "Device Discovery" mode.
 // If dev_discovery is set to false, then the block is successfully connected to the host.
 volatile bool dev_discovery = true;
@@ -49,7 +51,7 @@ NeoSWSerial ss(10, 2);
 
 uint32_t createPacket(uint32_t rec_id, uint32_t send_id, uint32_t action, uint32_t ctrl) {
 	return rec_id | (send_id << SEND_OFFSET) | (action << ACTION_OFFSET) | (ctrl << CTRL_OFFSET);
-}
+} 
 
 uint32_t hostNotify(uint32_t notif_code) {
 	return createPacket(HOST_ID, dev_id, HOST_NOTIFY, notif_code);
@@ -59,11 +61,28 @@ uint32_t deviceNotify(uint32_t notif_code) {
 	return createPacket(UNK_ID, UNK_ID, DEV_NOTIFY, notif_code);
 }
 
-int alternate = 0;
+int alternate = 0; 
+
+void indicate(){
+	
+	for(int j=0; j<12; j++){
+		digitalWrite(led_pins[j], HIGH);   // turn the LED on (HIGH is the voltage level)
+		delay(50);                       // wait for a second
+		digitalWrite(led_pins[j], LOW);    // turn the LED off by making the voltage LOW
+		delay(50);                       // wait for a second
+  	}
+	for(int j=11; j>=0; j--){
+		digitalWrite(led_pins[j], HIGH);   // turn the LED on (HIGH is the voltage level)
+		delay(50);                       // wait for a second
+		digitalWrite(led_pins[j], LOW);    // turn the LED off by making the voltage LOW
+		delay(50); 
+	}
+
+}
 
 void notifyHost() {
 	while (dev_discovery) {
-		digitalWrite(TEST_LED, alternate);
+		// digitalWrite(TEST_LED, alternate);
 		alternate = !alternate;
 		uint32_t packet = deviceNotify(CONNECTED);
 		NeoSerial1.write(START_BYTE);
@@ -76,8 +95,8 @@ void notifyHost() {
 	}
 	// Wait until the connection is acknowledged.
 	while (dev_id == UNK_ID) {
-		digitalWrite(TEST_LED, HIGH);
-		delay(1000);
+		// digitalWrite(TEST_LED, HIGH);
+		// delay(1000);
 	}
 }
 
@@ -130,6 +149,7 @@ static void handleRxDevice(uint8_t c) {
 				NeoSerial1.write((uint8_t) packet);
 				// Send the end byte.
 				NeoSerial1.write(END_BYTE);
+				
 			}
 			// ...
 		}
@@ -199,26 +219,33 @@ static void handleRxHost(uint8_t c) {
 		}
 		// If the device is connected to the host,
 		else {
-			// ...
+			// 
 		}
 	}
 }
 
 void setup() {
-	pinMode(TEST_LED, OUTPUT);
-	pinMode(TEST_LED2, OUTPUT);
+	// pinMode(TEST_LED, OUTPUT);
+	// pinMode(TEST_LED2, OUTPUT);
 
-	// Serial.begin(DEFAULT_BAUD);
+	// initialize digital pin LED_BUILTIN as an output.
+	for(int i=0; i<12; i++){
+		pinMode(led_pins[i], OUTPUT);
+	}
+
+	Serial.begin(DEFAULT_BAUD);
 	NeoSerial1.attachInterrupt(handleRxHost);
 	NeoSerial1.begin(MIDI_BAUD);
 	ss.attachInterrupt(handleRxDevice);
 	ss.begin(MIDI_BAUD);
 	notifyHost();
-	digitalWrite(TEST_LED, LOW);
+	// digitalWrite(TEST_LED, LOW);
+	delay(200);
+	indicate();
 }
 
 void loop() {
-	digitalWrite(TEST_LED2, !alternate);
-	alternate = !alternate;
-	delay(1000);
+	// digitalWrite(TEST_LED2, !alternate);
+	// alternate = !alternate;
+	// delay(1000);
 }

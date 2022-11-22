@@ -37,9 +37,15 @@ uint32_t deviceDiscovery() {
 	return createPacket(UNK_ID, HOST_ID, DEV_DISCOVERY, 0);
 }
 
+void IRAM_ATTR isr() {
+	
+}
+
 void setup() {
 	Serial.begin(9600);
 	Serial2.begin(MIDI_BAUD);
+	pinMode(23, INPUT_PULLUP);
+	attachInterrupt(23, isr, FALLING);
 }
 
 int i = 0;
